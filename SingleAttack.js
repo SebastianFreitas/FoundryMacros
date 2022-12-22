@@ -32,8 +32,9 @@ async function main() {
   <h1> Pick a weapon </h1>
   <div style="display:flex">
     
-    <span >Mod <input  id="mod" type="number" style="width:50px;float:right" value=0  /></span>
-    <span >Advantage <input  id="advantage" type="number" style="width:50px;float:right" value=0  /></span>
+    <span >HIT Mod <input  id="mod" type="number" style="width:50px;float:right" value=0  /></span>
+    <span >DMG Mod <input  id="mod1" type="text" style="width:50px;float:right" value=0  /></span>
+    <span >Adv <input  id="advantage" type="number" style="width:50px;float:right" value=0  /></span>
     <div style="flex:5"><input id="ignoreArmor" type="checkbox" unChecked style="width:50px;float:right" /></div>
     <div  style="flex:1"><select id="weapon">${weaponOptions}</select></div>
     </div>
@@ -49,6 +50,7 @@ async function main() {
           let wep = selected_actor.items.find(item => item.id == wepID)
           console.log(wep);
           let modifier = html.find("#mod")[0].value;
+          let modifierDamage = html.find("#mod1")[0].value;
           let ignoreArmor = html.find("#ignoreArmor")[0].checked;
           let advantage = html.find("#advantage")
           // Roll Attack
@@ -62,7 +64,7 @@ async function main() {
 
 
           // See if Attack is Greater than their armor, if so
-          let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(modifier) + parseInt(selected_actor.system.abilities.str.value)
+          let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(selected_actor.system.abilities.str.value) + parseInt(modifier)
 
           console.log("To hit " + result)
 
@@ -108,6 +110,9 @@ async function main() {
               let finaldmg = selected_actor.system.abilities.str.value;
               let wepDmg = (wep.system.damage?.parts ? wep.system.damage.parts : "")
 
+              if(modifierDamage != 0) wepDmg.push(modifierDamage)
+              console.log(modifierDamage)
+
               for (let i = 0; i < wepDmg.length; i++) {
 
                 let baseFormula = wepDmg[i][0]
@@ -121,13 +126,9 @@ async function main() {
 
                 console.log(type + "   type")
 
-                 regex = /([0-9]+)d([0-9]+)|[0-9]/g;
+                regex = /([0-9]+)d([0-9]+)|([0-9]+)/g;
                 let listResult = baseFormula.match(regex);
-                console.log(listResult + "   RESULT")
-
-
-
-                
+                console.log(listResult + "   RESULT");
 
                 let currentDamage = 0;
 
@@ -136,9 +137,7 @@ async function main() {
                   let currentRoll = 0;
                   if (listResult[i].match(/([0-9]+)d([0-9]+)/) != null) {
 
-                    let x = parseInt(listResult[i][0])
-                    console.log(listResult[i])
-                    let xplit = listResult[i].split('d')
+                    let xplit = listResult[i].split('d');
 
                     for (let a = 0; a < parseInt(xplit[0]); a++) {
                       currentRoll += rollDie(1, parseInt(xplit[1]));
@@ -146,10 +145,9 @@ async function main() {
 
                     if (isCrit) currentRoll *= 2;
 
-                  } else if (listResult[i].match(/([0-9]+)/) != null) currentRoll = parseInt(listResult[i])
+                  } else if (listResult[i].match(/([0-9]+)/) != null) currentRoll = parseInt(listResult[i]);
 
                   currentDamage += currentRoll;
-                  console.log(currentDamage + " CURRENT DAMAGE")
                 }
 
                 let resistances = target_actor.system.traits.dr.value
@@ -167,6 +165,7 @@ async function main() {
                 }
 
                 finaldmg += currentDamage 
+                console.log("Dealt "+ currentDamage +" "+ type + " damage")
 
 
               }
