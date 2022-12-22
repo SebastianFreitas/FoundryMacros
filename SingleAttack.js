@@ -30,14 +30,16 @@ async function main() {
 
   let dialogTemplate = `
   <h1> Pick a weapon </h1>
+  <div style="display:flex-direction: column">
+    <div>Extra HIT -> single number can be negative <input  id="mod" type="number"  value=0  /></div>
+    <div>Extra DMG -> ex: 2d12 6 radiant<input  id="mod1" type="text"  value=0  /></div>
+    <div>Advantage -> -1 | 0 | 1 | 2 <input  id="advantage" type="number" value=0  /></div>
+  </div>
+
   <div style="display:flex">
-    
-    <span >HIT Mod <input  id="mod" type="number" style="width:50px;float:right" value=0  /></span>
-    <span >DMG Mod <input  id="mod1" type="text" style="width:50px;float:right" value=0  /></span>
-    <span >Adv <input  id="advantage" type="number" style="width:50px;float:right" value=0  /></span>
-    <div style="flex:5"><input id="ignoreArmor" type="checkbox" unChecked style="width:50px;float:right" /></div>
-    <div  style="flex:1"><select id="weapon">${weaponOptions}</select></div>
-    </div>
+      <div style="flex:1"> NO AC?<input id="ignoreArmor" type="checkbox" unChecked style="width:25px;float:left" /></div>
+      <div style="flex:1"><select id="weapon">${weaponOptions}</select></div>
+  </div>
   `
   new Dialog({
     title: "Roll Attack",
@@ -109,18 +111,23 @@ async function main() {
 
               let finaldmg = selected_actor.system.abilities.str.value;
               let wepDmg = (wep.system.damage?.parts ? wep.system.damage.parts : "")
+              let finalList = [];
 
-              if(modifierDamage != 0) wepDmg.push(modifierDamage)
-              console.log(modifierDamage)
+              for(let i = 0; i < wepDmg.length; i ++){
+                finalList.push([wepDmg[i][0],wepDmg[i][1]])
+              }
 
-              for (let i = 0; i < wepDmg.length; i++) {
 
-                let baseFormula = wepDmg[i][0]
+              if(modifierDamage != 0) finalList.push([modifierDamage,modifierDamage])
+
+              for (let i = 0; i < finalList.length; i++) {
+
+                let baseFormula = finalList[i][0]
 
                 console.log(baseFormula + " <- BASE ");
 
                 let regex = /([a-z]{4,})/;
-                let type = baseFormula.match(regex)
+                let type = finalList[i][1].match(regex)
                 if (type == null) type = 'piercing'
                 else type = type[0]
 
@@ -156,12 +163,12 @@ async function main() {
 
                 if (immunities.length > 0 && searchStringInArray(type, immunities) != -1) {
                    currentDamage = 0;
-                   console.log("is immune to"+ type);
+                   console.log("is immune to "+ type);
 
                 } else
                 if (resistances.length > 0 && searchStringInArray(type, resistances) != -1) {
                   currentDamage *= .5;
-                  console.log("is resistant to"+ type);
+                  console.log("is resistant to "+ type);
                 }
 
                 finaldmg += currentDamage 
