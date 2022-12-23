@@ -129,7 +129,7 @@ async function main() {
           isCrit = (baseTohit >= critTreshold)
 
           // See if Attack is Greater than their armor, if so
-          let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(modifier) + abilityMod
+          let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(modifier) + parseInt(abilityMod) + parseInt(selected_actor.labels.proficiency)
           console.log("attack bonus " +wep.system.attackBonus)
           console.log("abilityMod " +abilityMod)
 
