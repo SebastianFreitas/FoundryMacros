@@ -33,7 +33,7 @@ async function main() {
   <div style="display:flex-direction: column">
     <div>Extra HIT -> single number can be negative <input  id="mod" type="number"  value=0  /></div>
     <div>Extra DMG -> ex: 2d12 6 radiant<input  id="mod1" type="text"  value=0  /></div>
-    <div>Advantage -> -1 | 0 | 1 | 2 <input  id="advantage" type="number" value=0  /></div>
+    <div>Advantage -> -1 | 0 | 1 <input  id="advantage" type="number" value=0  /></div>
   </div>
   <div style="display:flex">
       <div style="flex:1"> NO AC?<input id="ignoreArmor" type="checkbox" unChecked style="width:25px;float:left" /></div>
@@ -56,15 +56,50 @@ async function main() {
           let ignoreArmor = html.find("#ignoreArmor")[0].checked;
           let advantage = html.find("#advantage")
           let critOnHit = html.find("#critOnHit")[0].checked;
+
+          let elvenAccuracy = selected_actor.getFlag("dnd5e", "elvenAccuracy");
+          if(elvenAccuracy == undefined) elvenAccuracy = false
+
+          let halflingLucky = selected_actor.getFlag("dnd5e", "halflingLucky");
+          if(halflingLucky == undefined) halflingLucky = false
    
           let critTreshold = selected_actor.getFlag("dnd5e", "weaponCriticalThreshold");
           if(critTreshold == undefined) critTreshold = 20;
 
+          let extraDamage = 0
+          if(wep.system.actionType[0] == 'm') {
+
+            let meleeWeaponAttackBonus = selected_actor.getFlag("dnd5e", "meleeWeaponAttackBonus");
+            if(meleeWeaponAttackBonus == undefined) meleeWeaponAttackBonus = 0
+            else modifier+= meleeWeaponAttackBonus
+  
+            extraDamage = selected_actor.getFlag("dnd5e", "meleeWeaponDamageBonus");
+            if(extraDamage == undefined) extraDamage = 0
+  
+          }
+          else if (wep.system.actionType[0] == 'r') {
+
+            let rangedWeaponAttackBonus = selected_actor.getFlag("dnd5e", "rangedWeaponAttackBonus");
+            if(rangedWeaponAttackBonus == undefined) rangedWeaponAttackBonus = 0
+            else modifier+= rangedWeaponAttackBonus
+
+            extraDamage = selected_actor.getFlag("dnd5e", "rangedWeaponDamageBonus");
+            if(extraDamage == undefined) extraDamage = 0
+          }
+          
+
+ 
+
           let isCrit = false;
           let baseTohit = rollDie(1, 20);
-          if (advantage == 1) baseTohit = Math.max(rollDie(1, 20), rollDie(1, 20))
-          else if (advantage == 2 )  baseTohit = Math.max(Math.max(rollDie(1, 20), rollDie(1, 20)),rollDie(1, 20))
-          else if (advantage == -1 ) baseTohit = Math.min(rollDie(1, 20), rollDie(1, 20))
+          if (advantage == 1){
+            baseTohit = Math.max(baseTohit, rollDie(1, 20))
+            if(elvenAccuracy && wep.system.ability != 'str' && wep.system.ability != 'con') baseTohit = math.max(baseTohit,rollDie(1,20))
+          } 
+          else if (advantage == -1 ) baseTohit = Math.min(baseTohit, rollDie(1, 20))
+
+          if(baseTohit == 1 && halflingLucky) baseTohit = rollDie(1, 20);
+
           console.log("baseTohit " + baseTohit)
           isCrit = (baseTohit >= critTreshold)
 
@@ -123,14 +158,45 @@ async function main() {
           Hooks.once('renderChatMessage', (chatItem, html) => {
             html.find("#rollDamage").click(() => {
 
-              let finaldmg = selected_actor.system.abilities.str.value;
+              let abilityMod = 0;
+              switch(wep.system.ability){
+                case "str":
+                abilityMod=selected_actor.system.abilities.str.mod
+                break;
+                
+                case "dex":
+                abilityMod=selected_actor.system.abilities.dex.mod
+                break;
+                
+                case "int":
+                abilityMod=selected_actor.system.abilities.int.mod
+                break;
+                
+                case "wis":
+                abilityMod=selected_actor.system.abilities.wis.mod
+                break;
+                
+                case "cha":
+                abilityMod=selected_actor.system.abilities.cha.mod
+                break;
+                
+                case "con":
+                abilityMod=selected_actor.system.abilities.con.mod
+                break;
+                        
+              }
+              console.log(abilityMod)
+              console.log(extraDamage)
+              let finaldmg =0
+              let extraBaseDmg = parseInt(abilityMod) + parseInt(extraDamage);
+              console.log(finaldmg + "   <-<-<-<-<-<-<-<<--")
+
               let wepDmg = (wep.system.damage?.parts ? wep.system.damage.parts : "")
               let finalList = [];
 
               for(let i = 0; i < wepDmg.length; i ++){
                 finalList.push([wepDmg[i][0],wepDmg[i][1]])
               }
-
 
               if(modifierDamage != 0) finalList.push([modifierDamage,modifierDamage])
 
@@ -166,17 +232,13 @@ async function main() {
                       currentRoll += rollDie(1, parseInt(xplit[1]));
                       console.log(currentRoll+" <- <- added roll damage")
                     }
-
-                    
-
                   } else if (listResult[i].match(/([0-9]+)/) != null) currentRoll = parseInt(listResult[i]);
-
                   currentDamage += currentRoll;
                 }
 
                 let resistances = target_actor.system.traits.dr.value
                 let immunities = target_actor.system.traits.di.value
-
+                if(i == 0) currentDamage+=extraBaseDmg
 
                 if (immunities.length > 0 && searchStringInArray(type, immunities) != -1) {
                    
@@ -184,18 +246,15 @@ async function main() {
                   content: `Target immune to ${currentDamage} ${type} damage`});
                   currentDamage = 0;
 
-                } else
-                if (resistances.length > 0 && searchStringInArray(type, resistances) != -1) {
+                } else if (resistances.length > 0 && searchStringInArray(type, resistances) != -1) {
+
                   currentDamage *= .5;
                   ChatMessage.create({
-                    content: `Target immune to ${currentDamage} ${type} damage`});
+                    content: `Target resistant to ${currentDamage} ${type} damage`});
                     
                 }
-
                 finaldmg += currentDamage 
                 console.log("Dealt "+ currentDamage +" "+ type + " damage")
-
-
               }
 
               let hp = target_actor.system.attributes.hp.value
