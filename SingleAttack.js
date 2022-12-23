@@ -55,9 +55,11 @@ async function main() {
           let modifierDamage = html.find("#mod1")[0].value;
           let ignoreArmor = html.find("#ignoreArmor")[0].checked;
           let advantage = html.find("#advantage")
-          // Roll Attack
-          let critTreshold = 18;
           let automaticCrit = html.find("#automaticCrit")[0].checked;
+   
+          let critTreshold = selected_actor.getFlag("dnd5e", "weaponCriticalThreshold");
+          if(critTreshold == undefined) critTreshold = 20;
+
           let isCrit = false;
           let baseTohit = rollDie(1, 20);
           if (advantage == 1) baseTohit = Math.max(rollDie(1, 20), rollDie(1, 20))
@@ -65,7 +67,6 @@ async function main() {
           else if (advantage == -1 ) baseTohit = Math.min(rollDie(1, 20), rollDie(1, 20))
           console.log("baseTohit " + baseTohit)
           isCrit = (baseTohit >= critTreshold || automaticCrit)
-
 
           // See if Attack is Greater than their armor, if so
           let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(selected_actor.system.abilities.str.value) + parseInt(modifier)
