@@ -35,9 +35,9 @@ async function main() {
     <div>Extra DMG -> ex: 2d12 6 radiant<input  id="mod1" type="text"  value=0  /></div>
     <div>Advantage -> -1 | 0 | 1 | 2 <input  id="advantage" type="number" value=0  /></div>
   </div>
-
   <div style="display:flex">
       <div style="flex:1"> NO AC?<input id="ignoreArmor" type="checkbox" unChecked style="width:25px;float:left" /></div>
+      <div style="flex:1"> CRIT?<input id="automaticCrit" type="checkbox" unChecked style="width:25px;float:left" /></div>
       <div style="flex:1"><select id="weapon">${weaponOptions}</select></div>
   </div>
   `
@@ -57,12 +57,14 @@ async function main() {
           let advantage = html.find("#advantage")
           // Roll Attack
           let critTreshold = 18;
+          let automaticCrit = html.find("#automaticCrit")[0].checked;
           let isCrit = false;
           let baseTohit = rollDie(1, 20);
-          if (advantage > 0) baseTohit = Math.max(rollDie(1, 20), rollDie(1, 20))
-          else baseTohit = Math.min(rollDie(1, 20), rollDie(1, 20))
+          if (advantage == 1) baseTohit = Math.max(rollDie(1, 20), rollDie(1, 20))
+          else if (advantage == 2 )  baseTohit = Math.max(Math.max(rollDie(1, 20), rollDie(1, 20)),rollDie(1, 20))
+          else if (advantage == -1 ) baseTohit = Math.min(rollDie(1, 20), rollDie(1, 20))
           console.log("baseTohit " + baseTohit)
-          isCrit = (baseTohit >= critTreshold)
+          isCrit = (baseTohit >= critTreshold || automaticCrit)
 
 
           // See if Attack is Greater than their armor, if so
