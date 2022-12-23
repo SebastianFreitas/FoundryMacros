@@ -37,7 +37,7 @@ async function main() {
   </div>
   <div style="display:flex">
       <div style="flex:1"> NO AC?<input id="ignoreArmor" type="checkbox" unChecked style="width:25px;float:left" /></div>
-      <div style="flex:1"> CRIT?<input id="automaticCrit" type="checkbox" unChecked style="width:25px;float:left" /></div>
+      <div style="flex:1"> CRIT?<input id="critOnHit" type="checkbox" unChecked style="width:25px;float:left" /></div>
       <div style="flex:1"><select id="weapon">${weaponOptions}</select></div>
   </div>
   `
@@ -55,7 +55,7 @@ async function main() {
           let modifierDamage = html.find("#mod1")[0].value;
           let ignoreArmor = html.find("#ignoreArmor")[0].checked;
           let advantage = html.find("#advantage")
-          let automaticCrit = html.find("#automaticCrit")[0].checked;
+          let critOnHit = html.find("#critOnHit")[0].checked;
    
           let critTreshold = selected_actor.getFlag("dnd5e", "weaponCriticalThreshold");
           if(critTreshold == undefined) critTreshold = 20;
@@ -66,7 +66,7 @@ async function main() {
           else if (advantage == 2 )  baseTohit = Math.max(Math.max(rollDie(1, 20), rollDie(1, 20)),rollDie(1, 20))
           else if (advantage == -1 ) baseTohit = Math.min(rollDie(1, 20), rollDie(1, 20))
           console.log("baseTohit " + baseTohit)
-          isCrit = (baseTohit >= critTreshold || automaticCrit)
+          isCrit = (baseTohit >= critTreshold)
 
           // See if Attack is Greater than their armor, if so
           let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(selected_actor.system.abilities.str.value) + parseInt(modifier)
@@ -75,26 +75,37 @@ async function main() {
 
           // Print Chat with Button to Roll Damage
           let chatTemplate = ""
+          //let chatFirstMessage ="Rolled: natural "+result+" against "+armor+" Target Armor"
 
           let armor = parseInt(target_actor.system.attributes.ac.value) && !ignoreArmor ? parseInt(target_actor.system.attributes.ac.value) : 0;
           if (isCrit) {
             chatTemplate = `
-            <p> Rolled: ${result} against ${armor} Target Armor </p>
+            <p> Rolled: ${result} (${baseTohit}) against ${armor} Target AC </p>
             <p> It was a CRIT! </p>
             <p> It was a CRIIIIIIIIIIIIT! </p>
             <p> <button id="rollDamage">Roll Damage</button></p>
             `
           }
           else {
-            if (result > armor) {
-              chatTemplate = `
-                <p> Rolled: ${result} against ${armor} Target Armor </p>
+            if (result >= armor) {
+              if(critOnHit){
+                isCrit = true;
+                chatTemplate = `
+                <p> Rolled: ${result} (${baseTohit}) against ${armor} Target AC </p>
+                <p> It was a CRIT! </p>
+                <p> It was a CRIIIIIIIIIIIIT! </p>
+                <p> <button id="rollDamage">Roll Damage</button></p>
+                `
+              } else {
+                chatTemplate = `
+                <p> Rolled: ${result} (${baseTohit}) against ${armor} Target AC </p>
                 <p> It was a Hit! </p>
                 <p> <button id="rollDamage">Roll Damage</button></p>
                 `
+              }
             } else {
               chatTemplate = `
-                <p> Rolled: ${result} against ${armor} Target Armor </p>
+              <p> Rolled: ${result} (${baseTohit}) against ${armor} Target AC </p>
                 <p> It was a Miss! </p>
                 `
             }
@@ -148,12 +159,15 @@ async function main() {
                   if (listResult[i].match(/([0-9]+)d([0-9]+)/) != null) {
 
                     let xplit = listResult[i].split('d');
+                    let numberOfDices = parseInt(xplit[0])
+                    if(isCrit) numberOfDices*=2
 
-                    for (let a = 0; a < parseInt(xplit[0]); a++) {
+                    for (let a = 0; a < numberOfDices; a++) {
                       currentRoll += rollDie(1, parseInt(xplit[1]));
+                      console.log(currentRoll+" <- <- added roll damage")
                     }
 
-                    if (isCrit) currentRoll *= 2;
+                    
 
                   } else if (listResult[i].match(/([0-9]+)/) != null) currentRoll = parseInt(listResult[i]);
 
@@ -165,13 +179,17 @@ async function main() {
 
 
                 if (immunities.length > 0 && searchStringInArray(type, immunities) != -1) {
-                   currentDamage = 0;
-                   console.log("is immune to "+ type);
+                   
+                  ChatMessage.create({
+                  content: `Target immune to ${currentDamage} ${type} damage`});
+                  currentDamage = 0;
 
                 } else
                 if (resistances.length > 0 && searchStringInArray(type, resistances) != -1) {
                   currentDamage *= .5;
-                  console.log("is resistant to "+ type);
+                  ChatMessage.create({
+                    content: `Target immune to ${currentDamage} ${type} damage`});
+                    
                 }
 
                 finaldmg += currentDamage 
