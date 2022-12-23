@@ -87,7 +87,32 @@ async function main() {
             if(extraDamage == undefined) extraDamage = 0
           }
           
-
+          let abilityMod = 0;
+          switch(wep.system.ability){
+            case "str":
+            abilityMod=selected_actor.system.abilities.str.mod
+            break;
+            
+            case "dex":
+            abilityMod=selected_actor.system.abilities.dex.mod
+            break;
+            
+            case "int":
+            abilityMod=selected_actor.system.abilities.int.mod
+            break;
+            
+            case "wis":
+            abilityMod=selected_actor.system.abilities.wis.mod
+            break;
+            
+            case "cha":
+            abilityMod=selected_actor.system.abilities.cha.mod
+            break;
+            
+            case "con":
+            abilityMod=selected_actor.system.abilities.con.mod
+            break;       
+          }
  
 
           let isCrit = false;
@@ -104,7 +129,9 @@ async function main() {
           isCrit = (baseTohit >= critTreshold)
 
           // See if Attack is Greater than their armor, if so
-          let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(selected_actor.system.abilities.str.value) + parseInt(modifier)
+          let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(modifier) + abilityMod
+          console.log("attack bonus " +wep.system.attackBonus)
+          console.log("abilityMod " +abilityMod)
 
           console.log("To hit " + result)
 
@@ -158,38 +185,8 @@ async function main() {
           Hooks.once('renderChatMessage', (chatItem, html) => {
             html.find("#rollDamage").click(() => {
 
-              let abilityMod = 0;
-              switch(wep.system.ability){
-                case "str":
-                abilityMod=selected_actor.system.abilities.str.mod
-                break;
-                
-                case "dex":
-                abilityMod=selected_actor.system.abilities.dex.mod
-                break;
-                
-                case "int":
-                abilityMod=selected_actor.system.abilities.int.mod
-                break;
-                
-                case "wis":
-                abilityMod=selected_actor.system.abilities.wis.mod
-                break;
-                
-                case "cha":
-                abilityMod=selected_actor.system.abilities.cha.mod
-                break;
-                
-                case "con":
-                abilityMod=selected_actor.system.abilities.con.mod
-                break;
-                        
-              }
-              console.log(abilityMod)
-              console.log(extraDamage)
               let finaldmg =0
               let extraBaseDmg = parseInt(abilityMod) + parseInt(extraDamage);
-              console.log(finaldmg + "   <-<-<-<-<-<-<-<<--")
 
               let wepDmg = (wep.system.damage?.parts ? wep.system.damage.parts : "")
               let finalList = [];
