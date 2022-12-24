@@ -276,7 +276,7 @@ async function main() {
             })
           })
           attackCounter++
-          throw new Error('You have made'+ attackCounter + 'attacks')
+          throw new Error('You have made '+ attackCounter + ' attacks')
         }
       },
     }
