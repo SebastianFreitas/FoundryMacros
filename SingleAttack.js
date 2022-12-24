@@ -42,6 +42,9 @@ async function main() {
   </div>
   `
   new Dialog({
+    beforeClose: function(){
+      return false;
+    },
     title: "Roll Attack",
     content: dialogTemplate,
     buttons: {
@@ -56,6 +59,7 @@ async function main() {
           let ignoreArmor = html.find("#ignoreArmor")[0].checked;
           let advantage = html.find("#advantage")
           let critOnHit = html.find("#critOnHit")[0].checked;
+          //let critOnHit = html.find("#critOnHit")[0].checked;
 
           let elvenAccuracy = selected_actor.getFlag("dnd5e", "elvenAccuracy");
           if(elvenAccuracy == undefined) elvenAccuracy = false
@@ -119,7 +123,8 @@ async function main() {
           let baseTohit = rollDie(1, 20);
           if (advantage == 1){
             baseTohit = Math.max(baseTohit, rollDie(1, 20))
-            if(elvenAccuracy && wep.system.ability != 'str' && wep.system.ability != 'con') baseTohit = math.max(baseTohit,rollDie(1,20))
+            if(elvenAccuracy && wep.system.ability != 'str' && wep.system.ability != 'con' ||
+              advantage == 2) baseTohit = math.max(baseTohit,rollDie(1,20))
           } 
           else if (advantage == -1 ) baseTohit = Math.min(baseTohit, rollDie(1, 20))
 
@@ -129,9 +134,8 @@ async function main() {
           isCrit = (baseTohit >= critTreshold)
 
           // See if Attack is Greater than their armor, if so
-          let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(modifier) + parseInt(abilityMod) + parseInt(selected_actor.labels.proficiency)
-          console.log("attack bonus " +wep.system.attackBonus)
-          console.log("abilityMod " +abilityMod)
+          let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(modifier) + parseInt(abilityMod) + parseInt(selected_actor.system.attributes.prof)
+
 
           console.log("To hit " + result)
 
@@ -268,11 +272,9 @@ async function main() {
 
             })
           })
+          return false;
         }
       },
-      close: {
-        label: "Close"
-      }
     }
   }).render(true)
 }
