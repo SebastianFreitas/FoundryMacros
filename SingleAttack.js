@@ -1,5 +1,7 @@
 main()
 
+let attackCounter = 0
+
 async function main() {
   // Get Selected
   let selected = canvas.tokens.controlled;
@@ -42,15 +44,16 @@ async function main() {
   </div>
   `
   new Dialog({
-    beforeClose: function(){
-      return false;
-    },
+
     title: "Roll Attack",
     content: dialogTemplate,
+   // close: () => { throw new Error('You cannot leave here!'); },
     buttons: {
+      
       rollAtk: {
         label: "Roll Attack",
-        callback: async (html) => {
+        callback: (html) => {
+          
           let wepID = html.find("#weapon")[0].value;
           let wep = selected_actor.items.find(item => item.id == wepID)
           console.log(wep);
@@ -118,7 +121,6 @@ async function main() {
             break;       
           }
  
-
           let isCrit = false;
           let baseTohit = rollDie(1, 20);
           if (advantage == 1){
@@ -254,7 +256,8 @@ async function main() {
                     content: `Target resistant to ${currentDamage} ${type} damage`});
                     
                 }
-                finaldmg += currentDamage 
+                finaldmg += currentDamage
+                parseInt(finaldmg) 
                 console.log("Dealt "+ currentDamage +" "+ type + " damage")
               }
 
@@ -272,7 +275,8 @@ async function main() {
 
             })
           })
-          return false;
+          attackCounter++
+          throw new Error('You have made'+ attackCounter + 'attacks')
         }
       },
     }
