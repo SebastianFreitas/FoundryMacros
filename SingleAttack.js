@@ -33,9 +33,11 @@ async function main() {
   let dialogTemplate = `
   <h1> Pick a weapon </h1>
   <div style="display:flex-direction: column">
-    <div>Extra HIT -> single number can be negative <input  id="mod" type="number"  value=0  /></div>
-    <div>Extra DMG -> ex: 2d12 6 radiant<input  id="mod1" type="text"  value=0  /></div>
+    <div>Extra HIT -> single number can be negative <input  id="hitMod" type="number"  value=0  /></div>
+    <div>Extra DMG -> ex: 2d12 6 radiant<input  id="dmgMod" type="text"  value=0  /></div>
     <div>Advantage -> -1 | 0 | 1 <input  id="advantage" type="number" value=0  /></div>
+    <div>How many Attacks?<input  id="numberOfAttacks" type="number" value=0  /></div>
+  </div>
   </div>
   <div style="display:flex">
       <div style="flex:1"> NO AC?<input id="ignoreArmor" type="checkbox" unChecked style="width:25px;float:left" /></div>
@@ -49,7 +51,6 @@ async function main() {
     content: dialogTemplate,
    // close: () => { throw new Error('You cannot leave here!'); },
     buttons: {
-      
       rollAtk: {
         label: "Roll Attack",
         callback: (html) => {
@@ -57,12 +58,13 @@ async function main() {
           let wepID = html.find("#weapon")[0].value;
           let wep = selected_actor.items.find(item => item.id == wepID)
           console.log(wep);
-          let modifier = html.find("#mod")[0].value;
-          let modifierDamage = html.find("#mod1")[0].value;
+          let numberOfAttacks = 0
+          numberOfAttacks = html.find("#numberOfAttacks")[0].value
+          let modifier = html.find("#hitMod")[0].value;
+          let modifierDamage = html.find("#dmgMod")[0].value;
           let ignoreArmor = html.find("#ignoreArmor")[0].checked;
           let advantage = html.find("#advantage")
           let critOnHit = html.find("#critOnHit")[0].checked;
-          //let critOnHit = html.find("#critOnHit")[0].checked;
 
           let elvenAccuracy = selected_actor.getFlag("dnd5e", "elvenAccuracy");
           if(elvenAccuracy == undefined) elvenAccuracy = false
@@ -120,7 +122,10 @@ async function main() {
             abilityMod=selected_actor.system.abilities.con.mod
             break;       
           }
- 
+          // let numberOfCurrentAttacks = numberOfAttacks
+          // for(let y = 0;y < numberOfAttacks;y++){
+
+          // }
           let isCrit = false;
           let baseTohit = rollDie(1, 20);
           if (advantage == 1){
@@ -191,7 +196,7 @@ async function main() {
           Hooks.once('renderChatMessage', (chatItem, html) => {
             html.find("#rollDamage").click(() => {
 
-              let finaldmg =0
+              let finaldmg = 0
               let extraBaseDmg = parseInt(abilityMod) + parseInt(extraDamage);
 
               let wepDmg = (wep.system.damage?.parts ? wep.system.damage.parts : "")
