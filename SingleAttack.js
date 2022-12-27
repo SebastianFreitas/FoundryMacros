@@ -36,7 +36,8 @@ async function main() {
     <div>Extra HIT -> single number can be negative <input  id="hitMod" type="number"  value=0  /></div>
     <div>Extra DMG -> ex: 2d12 6 radiant<input  id="dmgMod" type="text"  value=0  /></div>
     <div>Advantage -> -1 | 0 | 1 <input  id="advantage" type="number" value=0  /></div>
-    <div>How many Attacks?<input  id="numberOfAttacks" type="number" value=0  /></div>
+    <div>How many attacks?<input  id="numberOfAttacks" type="number" value=1  /></div>
+    <div>How many attackers?<input  id="numberOfAttackers" type="number" value=1  /></div>
   </div>
   </div>
   <div style="display:flex">
@@ -65,6 +66,7 @@ async function main() {
           let ignoreArmor = html.find("#ignoreArmor")[0].checked;
           let advantage = html.find("#advantage")
           let critOnHit = html.find("#critOnHit")[0].checked;
+          let numberOfAttackers = html.find("#numberOfAttackers")[0].checked;
 
           let elvenAccuracy = selected_actor.getFlag("dnd5e", "elvenAccuracy");
           if(elvenAccuracy == undefined) elvenAccuracy = false
@@ -96,6 +98,7 @@ async function main() {
             if(extraDamage == undefined) extraDamage = 0
           }
           
+          let isCrit = false;
           let abilityMod = 0;
           switch(wep.system.ability){
             case "str":
@@ -122,75 +125,167 @@ async function main() {
             abilityMod=selected_actor.system.abilities.con.mod
             break;       
           }
-          // let numberOfCurrentAttacks = numberOfAttacks
-          // for(let y = 0;y < numberOfAttacks;y++){
-
-          // }
-          let isCrit = false;
-          let baseTohit = rollDie(1, 20);
-          if (advantage == 1){
-            baseTohit = Math.max(baseTohit, rollDie(1, 20))
-            if(elvenAccuracy && wep.system.ability != 'str' && wep.system.ability != 'con' ||
-              advantage == 2) baseTohit = math.max(baseTohit,rollDie(1,20))
-          } 
-          else if (advantage == -1 ) baseTohit = Math.min(baseTohit, rollDie(1, 20))
-
-          if(baseTohit == 1 && halflingLucky) baseTohit = rollDie(1, 20);
-
-          console.log("baseTohit " + baseTohit)
-          isCrit = (baseTohit >= critTreshold)
-
-          // See if Attack is Greater than their armor, if so
-          let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(modifier) + parseInt(abilityMod) + parseInt(selected_actor.system.attributes.prof)
-
-
-          console.log("To hit " + result)
-
-          // Print Chat with Button to Roll Damage
-          let chatTemplate = ""
-          //let chatFirstMessage ="Rolled: natural "+result+" against "+armor+" Target Armor"
-
-          let armor = parseInt(target_actor.system.attributes.ac.value) && !ignoreArmor ? parseInt(target_actor.system.attributes.ac.value) : 0;
-          if (isCrit) {
-            chatTemplate = `
-            <p> Rolled: ${result} (${baseTohit}) against ${armor} Target AC </p>
-            <p> It was a CRIT! </p>
-            <p> It was a CRIIIIIIIIIIIIT! </p>
-            <p> <button id="rollDamage">Roll Damage</button></p>
-            `
+          if(numberOfAttackers > 1){
+            let currentNumberOfAttackers = Math.floor((numberOfAttackers*hpactor)/maxHpactor)
+            numberOfAttacks *= currentNumberOfAttackers
           }
-          else {
-            if (result >= armor) {
-              if(critOnHit){
-                isCrit = true;
-                chatTemplate = `
-                <p> Rolled: ${result} (${baseTohit}) against ${armor} Target AC </p>
-                <p> It was a CRIT! </p>
-                <p> It was a CRIIIIIIIIIIIIT! </p>
-                <p> <button id="rollDamage">Roll Damage</button></p>
-                `
+
+          for(let y = 0;y < numberOfAttacks;y++){
+            attackCounter++
+            isCrit = false;
+            let baseTohit = rollDie(1, 20);
+            if (advantage == 1){
+              baseTohit = Math.max(baseTohit, rollDie(1, 20))
+              if(elvenAccuracy && wep.system.ability != 'str' && wep.system.ability != 'con' ||
+                advantage == 2) baseTohit = math.max(baseTohit,rollDie(1,20))
+            } 
+            else if (advantage == -1 ) baseTohit = Math.min(baseTohit, rollDie(1, 20))
+  
+            if(baseTohit == 1 && halflingLucky) baseTohit = rollDie(1, 20);
+  
+            console.log("baseTohit " + baseTohit)
+            isCrit = (baseTohit >= critTreshold)
+  
+            // See if Attack is Greater than their armor, if so
+            let result = parseInt(baseTohit) + parseInt(wep.system.attackBonus) + parseInt(modifier) + parseInt(abilityMod) + parseInt(selected_actor.system.attributes.prof)
+  
+  
+            console.log("To hit " + result)
+  
+            // Print Chat with Button to Roll Damage
+            let chatTemplate = ""
+            //let chatFirstMessage ="Rolled: natural "+result+" against "+armor+" Target Armor"
+  
+            let armor = parseInt(target_actor.system.attributes.ac.value) && !ignoreArmor ? parseInt(target_actor.system.attributes.ac.value) : 0;
+            if (isCrit) {
+              chatTemplate = `
+              <p> Rolled: ${result} (${baseTohit}) against ${armor} Target AC </p>
+              <p> It was a CRIT! </p>
+              <p> It was a CRIIIIIIIIIIIIT! </p>
+              <p> <button id="rollDamage">Roll Damage</button></p>
+              `
+            }
+            else {
+              if (result >= armor) {
+                if(critOnHit){
+                  isCrit = true;
+                  chatTemplate = `
+                  <p> Rolled: ${result} (${baseTohit}) against ${armor} Target AC </p>
+                  <p> It was a CRIT! </p>
+                  <p> It was a CRIIIIIIIIIIIIT! </p>
+                  <p> <button id="rollDamage">Roll Damage</button></p>
+                  `
+                } else {
+                  chatTemplate = `
+                  <p> Rolled: ${result} (${baseTohit}) against ${armor} Target AC </p>
+                  <p> It was a Hit! </p>
+                  <p> <button id="rollDamage">Roll Damage</button></p>
+                  `
+                }
               } else {
                 chatTemplate = `
                 <p> Rolled: ${result} (${baseTohit}) against ${armor} Target AC </p>
-                <p> It was a Hit! </p>
-                <p> <button id="rollDamage">Roll Damage</button></p>
-                `
+                  <p> It was a Miss! </p>
+                  `
               }
-            } else {
-              chatTemplate = `
-              <p> Rolled: ${result} (${baseTohit}) against ${armor} Target AC </p>
-                <p> It was a Miss! </p>
-                `
+            } 
+            if(numberOfAttacks == 1){
+              ChatMessage.create({
+                speaker: {
+                  alias: selected_actor.name
+                },
+                content: chatTemplate,
+                result: result
+              })
+            }else if(result >= armor || isCrit){
+              let finaldmg = 0
+              let extraBaseDmg = parseInt(abilityMod) + parseInt(extraDamage);
+
+              let wepDmg = (wep.system.damage?.parts ? wep.system.damage.parts : "")
+              let finalList = [];
+
+              for(let i = 0; i < wepDmg.length; i ++){
+                finalList.push([wepDmg[i][0],wepDmg[i][1]])
+              }
+
+              if(modifierDamage != 0) finalList.push([modifierDamage,modifierDamage])
+
+              for (let i = 0; i < finalList.length; i++) {
+
+                let baseFormula = finalList[i][0]
+
+                console.log(baseFormula + " <- BASE ");
+
+                let regex = /([a-z]{4,})/;
+                let type = finalList[i][1].match(regex)
+                if (type == null) type = 'piercing'
+                else type = type[0]
+
+                console.log(type + "   type")
+
+                regex = /([0-9]+)d([0-9]+)|([0-9]+)/g;
+                let listResult = baseFormula.match(regex);
+                console.log(listResult + "   RESULT");
+
+                let currentDamage = 0;
+
+                for (let i = 0; i < listResult.length; i++) {
+
+                  let currentRoll = 0;
+                  if (listResult[i].match(/([0-9]+)d([0-9]+)/) != null) {
+
+                    let xplit = listResult[i].split('d');
+                    let numberOfDices = parseInt(xplit[0])
+                    if(isCrit) numberOfDices*=2
+
+                    for (let a = 0; a < numberOfDices; a++) {
+                      currentRoll += rollDie(1, parseInt(xplit[1]));
+                      console.log(currentRoll+" <- <- added roll damage")
+                    }
+                  } else if (listResult[i].match(/([0-9]+)/) != null) currentRoll = parseInt(listResult[i]);
+                  currentDamage += currentRoll;
+                }
+
+                let resistances = target_actor.system.traits.dr.value
+                let immunities = target_actor.system.traits.di.value
+                if(i == 0) currentDamage+=extraBaseDmg
+
+                if (immunities.length > 0 && searchStringInArray(type, immunities) != -1) {
+                   
+                  ChatMessage.create({
+                  content: `Target immune to ${currentDamage} ${type} damage`});
+                  currentDamage = 0;
+
+                } else if (resistances.length > 0 && searchStringInArray(type, resistances) != -1) {
+
+                  currentDamage *= .5;
+                  ChatMessage.create({
+                    content: `Target resistant to ${currentDamage} ${type} damage`});
+                    
+                }
+                finaldmg += currentDamage
+                parseInt(finaldmg) 
+                console.log("Dealt "+ currentDamage +" "+ type + " damage")
+              }
+
+              let hp = target_actor.system.attributes.hp.value
+              let maxHp = target_actor.system.attributes.hp.max
+
+              let updatedHp = finaldmg > hp ? 0 : hp - finaldmg
+
+              target_actor.update({ 'system.attributes.hp.value': updatedHp > maxHp ? maxHp : updatedHp })
+
+              ChatMessage.create({
+                content: `You dealt ${finaldmg} damage!`
+
+              });
+              
+              
             }
           }
+          if(numberOfAttacks > 1 )throw new Error('You have made '+ attackCounter + ' attacks')
 
-          ChatMessage.create({
-            speaker: {
-              alias: selected_actor.name
-            },
-            content: chatTemplate,
-            result: result
-          })
+
 
           // Roll Damage
           Hooks.once('renderChatMessage', (chatItem, html) => {
@@ -280,10 +375,15 @@ async function main() {
 
             })
           })
-          attackCounter++
           throw new Error('You have made '+ attackCounter + ' attacks')
         }
       },
+      rollAtk2: {
+        label: "Reset Attacks",
+        callback: () => {
+          attackCounter = 0
+          throw new Error('You have made '+ attackCounter + ' attacks')
+        }},
     }
   }).render(true)
 }
