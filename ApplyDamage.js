@@ -4,7 +4,7 @@
 let content = `
   <form>
     <div class="form-group">
-      <label for="id="damage-amount">Damage</label>
+      <label for="id="damage-amount"  value="-11111">Damage</label>
       <input id="damage-amount" type="number" name="inputField" autofocus>
     </div>
   </form>`

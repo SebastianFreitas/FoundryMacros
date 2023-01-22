@@ -130,6 +130,8 @@ async function main() {
             numberOfAttacks *= currentNumberOfAttackers
           }
 
+          let totalFinalDamage = 0;
+
           for(let y = 0;y < numberOfAttacks;y++){
             attackCounter++
             isCrit = false;
@@ -266,23 +268,26 @@ async function main() {
                 finaldmg += currentDamage
                 parseInt(finaldmg) 
                 console.log("Dealt "+ currentDamage +" "+ type + " damage")
+                totalFinalDamage+=finaldmg
               }
 
-              let hp = target_actor.system.attributes.hp.value
-              let maxHp = target_actor.system.attributes.hp.max
-
-              let updatedHp = finaldmg > hp ? 0 : hp - finaldmg
-
-              target_actor.update({ 'system.attributes.hp.value': updatedHp > maxHp ? maxHp : updatedHp })
+              
 
               ChatMessage.create({
                 content: `You dealt ${finaldmg} damage!`
 
               });
-              
-              
             }
+            
           }
+
+          let hp = target_actor.system.attributes.hp.value
+          let maxHp = target_actor.system.attributes.hp.max
+
+          let updatedHp = totalFinalDamage > hp ? 0 : hp - totalFinalDamage
+
+          target_actor.update({ 'system.attributes.hp.value': updatedHp > maxHp ? maxHp : updatedHp })
+
           if(numberOfAttacks > 1 )throw new Error('You have made '+ attackCounter + ' attacks')
 
 
